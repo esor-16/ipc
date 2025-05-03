@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inter Process Communication</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Rockids font: If you have the .ttf, use @font-face in CSS. Otherwise, fallback to a similar Google Font. -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Example fallback: -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    /* Sidebar spacing fix */
+    .side-menu {
+      padding-left: 1rem /* Further increased left padding */
+    }
+    .side-menu a {
+      margin-left: 0.5rem; /* More extra space for all links */
+      padding: 0.8rem 0; /* Add vertical padding for better clickability */
+      display: block; /* Make entire area clickable */
+    }
+  </style>
+</head>
+<body>
+  <!-- Dots background -->
+  <canvas id="dots-bg"></canvas>
+  <!-- Topic bar at the very top -->
+  <div class="topic-bar">Inter Process Communication</div>
+  <!-- Hamburger and sidebar OUTSIDE header -->
+  <input type="checkbox" id="menu-btn" class="menu-btn">
+  <label for="menu-btn" class="menu-icon">
+    <span class="navicon"></span>
+  </label>
+  <nav class="side-menu">
+    <a href="index.html"><span>🏠</span> Home</a>
+    <a href="about.html"><span>ℹ️</span> About</a>
+    <a href="documentation.html"><span>📚</span> Documentation</a>
+    <a href="https://github.com/your-repo" target="_blank"><span>🐱</span> GitHub</a>
+  </nav>
+  <header class="futuristic-green-header"></header>
+  <main>
+    <section class="futuristic-card">
+      <h2>Welcome!</h2>
+      <p>This web app explores Inter Process Communication mechanisms.</p>
+      <div class="button-group">
+        <button onclick="location.href='shared-memory.html'">Shared Memory</button>
+        <button onclick="location.href='message-passing.html'">Message Passing</button>
+      </div>
+    </section>
+  </main>
+  <footer>
+    © 2025 Inter Process Communication Project
+  </footer>
+  <script src="dots.js"></script>
+</body>
+</html>
+

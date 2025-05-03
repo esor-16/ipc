@@ -1,0 +1,714 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inter Process Communication</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Rockids font: If you have the .ttf, use @font-face in CSS. Otherwise, fallback to a similar Google Font. -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Example fallback: -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <title>Naming: Interactive Message Passing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      font-family: 'Orbitron', Arial, sans-serif;
+      color: #e0ffe0;
+      background: #101820;
+    }
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      background: #101820;
+    }
+    .container {
+      position: relative;
+      z-index: 1;
+      background: rgba(20, 30, 40, 0.96);
+      border-radius: 18px;
+      box-shadow: 0 4px 32px #39ff1444, 0 0 40px #39ff1422 inset;
+      padding: 2.5rem 2rem 2rem 2rem;
+      border-left: 4px solid #39ff14;
+      border-bottom: 2px solid #00ff99;
+      max-width: 520px;
+      margin: 3rem auto;
+      text-align: center;
+    }
+    h1 {
+      color: #39ff14;
+      font-size: 2rem;
+      margin-bottom: 1.2rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px #39ff14aa;
+    }
+    .toggle-group {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .toggle-btn {
+      background: #232b3a;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: 700;
+      padding: 0.7rem 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 8px #39ff1444;
+      letter-spacing: 1px;
+    }
+    .toggle-btn.active, .toggle-btn:focus {
+      background: #39ff14;
+      color: #101820;
+      border-color: #00ff99;
+      box-shadow: 0 0 16px #39ff14aa;
+      outline: none;
+    }
+    .wizard-step {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      color: #baffc9;
+      text-align: center;
+    }
+    .wizard-input {
+      background: #232b3a;
+      color: #39ff14;
+      border: 1px solid #39ff14;
+      border-radius: 4px;
+      font-size: 1.08rem;
+      padding: 0.3rem 0.8rem;
+      margin: 0.7rem 0;
+      width: 10rem;
+      text-align: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    .wizard-nav {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      margin-top: 1.2rem;
+    }
+    .diagram-area {
+      margin: 2rem 0 1.2rem 0;
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .diagram-svg {
+      width: 350px;
+      height: 100px;
+      display: block;
+      margin: 0 auto;
+    }
+    .explanation-box {
+      background: #232b3a;
+      border: 2px solid #39ff14;
+      border-radius: 10px;
+      color: #e0ffe0;
+      font-size: 1.08rem;
+      padding: 1rem 1.2rem;
+      margin: 0 auto 1.2rem auto;
+      max-width: 400px;
+      box-shadow: 0 0 12px #39ff1444;
+      text-align: left;
+      word-break: break-word;
+    }
+    .tip {
+      color: #00ff99;
+      font-size: 0.98rem;
+      margin-top: 0.7rem;
+      text-align: left;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .mailbox-box {
+      fill: #101820;
+      stroke: #39ff14;
+      stroke-width: 2.5;
+    }
+    .mailbox-label {
+      fill: #39ff14;
+      font-size: 1.05em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    .message-rect {
+      fill: #39ff14;
+      stroke: #00ff99;
+      stroke-width: 1.5;
+      opacity: 0.9;
+    }
+    .message-text {
+      fill: #101820;
+      font-size: 0.95em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    .proc-box {
+      fill: #232b3a;
+      stroke: #39ff14;
+      stroke-width: 2.5;
+    }
+    .proc-label {
+      fill: #39ff14;
+      font-size: 1.08em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    .arrow {
+      stroke: #39ff14;
+      stroke-width: 2.5;
+      marker-end: url(#arrowhead);
+    }
+    .arrow-indirect {
+      stroke: #00ff99;
+      stroke-width: 2.5;
+      marker-end: url(#arrowhead);
+      stroke-dasharray: 6 4;
+    }
+    .queue-label {
+      fill: #00ff99;
+      font-size: 0.95em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    .queue-state {
+      fill: #fff;
+      font-size: 0.95em;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 1.2rem 0.5rem; }
+      .diagram-svg { width: 98vw; }
+      .explanation-box, .tip { max-width: 98vw; }
+      .wizard-input { width: 90vw; }
+    }
+  </style>
+</head>
+<body>
+  body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="topic-bar">Inter Process Communication</div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="container">
+    <h1>Naming: Interactive Message Passing</h1>
+    <div id="wizardArea"></div>
+    <div class="diagram-area" id="diagramArea"></div>
+    <div class="explanation-box" id="explanationBox"></div>
+    <div class="tip" id="tipBox"></div>
+  </div>
+  <script>
+    // Futuristic animated background with many white shaking dots
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let whiteDots = [];
+    const WHITE_DOTS = 500;
+    const WHITE_COLOR = "#fff";
+    const WHITE_RADIUS = 2.6;
+    const WHITE_SHAKE = 2.2;
+    const WHITE_SPEED = 0.7;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    function initDots() {
+      whiteDots = [];
+      for (let i = 0; i < WHITE_DOTS; i++) {
+        let angle = Math.random() * 2 * Math.PI;
+        let r = Math.random() * (Math.min(canvas.width, canvas.height) / 1.5);
+        let cx = canvas.width / 2 + Math.cos(angle) * r;
+        let cy = canvas.height / 2 + Math.sin(angle) * r;
+        whiteDots.push({
+          x: cx,
+          y: cy,
+          dx: (Math.random() - 0.5) * WHITE_SPEED,
+          dy: (Math.random() - 0.5) * WHITE_SPEED,
+          shakePhase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+    function animateDots() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let dot of whiteDots) {
+        let shakeX = Math.sin(Date.now() / 350 + dot.shakePhase) * WHITE_SHAKE;
+        let shakeY = Math.cos(Date.now() / 350 + dot.shakePhase) * WHITE_SHAKE;
+        dot.x += dot.dx;
+        dot.y += dot.dy;
+        if (dot.x < 0 || dot.x > canvas.width) dot.dx *= -1;
+        if (dot.y < 0 || dot.y > canvas.height) dot.dy *= -1;
+        ctx.beginPath();
+        ctx.arc(dot.x + shakeX, dot.y + shakeY, WHITE_RADIUS, 0, 2 * Math.PI);
+        ctx.fillStyle = WHITE_COLOR;
+        ctx.shadowColor = WHITE_COLOR;
+        ctx.shadowBlur = 6;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      requestAnimationFrame(animateDots);
+    }
+    function setupBG() {
+      resizeCanvas();
+      initDots();
+      animateDots();
+    }
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      initDots();
+    });
+    setupBG();
+
+    // Interactive Wizard Logic
+    const wizardArea = document.getElementById('wizardArea');
+    const diagramArea = document.getElementById('diagramArea');
+    const explanationBox = document.getElementById('explanationBox');
+    const tipBox = document.getElementById('tipBox');
+
+    // Wizard state
+    let wizardState = {
+      mode: null, // "direct" or "indirect"
+      numProcesses: 2,
+      processNames: ["P1", "P2"],
+      sender: "P1",
+      receiver: "P2",
+      message: "Data",
+      mailbox: "Mbox1"
+    };
+    let wizardStep = 0;
+
+    function renderWizard() {
+      wizardArea.innerHTML = "";
+      let html = "";
+      // Step 0: Choose communication type
+      if (wizardStep === 0) {
+        html += `
+          <div class="wizard-step">
+            <b>Choose Communication Type:</b><br>
+            <div class="toggle-group" style="margin-top:1.2rem;">
+              <button class="toggle-btn${wizardState.mode === "direct" ? " active" : ""}" id="directBtn">Direct Communication</button>
+              <button class="toggle-btn${wizardState.mode === "indirect" ? " active" : ""}" id="indirectBtn">Indirect Communication</button>
+            </div>
+          </div>
+          <div class="wizard-nav">
+            ${wizardState.mode ? `<button class="toggle-btn" id="nextBtn">Next</button>` : ""}
+          </div>
+        `;
+      }
+      // Step 1: Number of processes
+      else if (wizardStep === 1) {
+        html += `
+          <div class="wizard-step">
+            <b>Enter number of processes (2-10):</b><br>
+            <input class="wizard-input" type="number" id="numProcInput" min="2" max="10" value="${wizardState.numProcesses}">
+          </div>
+          <div class="wizard-nav">
+            <button class="toggle-btn" id="backBtn">Back</button>
+            <button class="toggle-btn" id="nextBtn">Next</button>
+          </div>
+        `;
+      }
+      // Step 2: Enter process names
+      else if (wizardStep === 2) {
+        html += `<div class="wizard-step"><b>Enter process names:</b><br>`;
+        for (let i = 0; i < wizardState.numProcesses; i++) {
+          html += `
+            <input class="wizard-input" type="text" id="procName${i}" maxlength="8" value="${wizardState.processNames[i] || `P${i+1}`}" style="margin-bottom:0.5rem;"><br>
+          `;
+        }
+        html += `</div>
+          <div class="wizard-nav">
+            <button class="toggle-btn" id="backBtn">Back</button>
+            <button class="toggle-btn" id="nextBtn">Next</button>
+          </div>
+        `;
+      }
+      // Step 3: Sender
+      else if (wizardStep === 3) {
+        html += `
+          <div class="wizard-step">
+            <b>Select Sender Process:</b><br>
+            <select class="wizard-input" id="senderSel">
+              ${wizardState.processNames.map((n, i) => `<option value="${n}" ${n===wizardState.sender?"selected":""}>${n}</option>`).join("")}
+            </select>
+          </div>
+          <div class="wizard-nav">
+            <button class="toggle-btn" id="backBtn">Back</button>
+            <button class="toggle-btn" id="nextBtn">Next</button>
+          </div>
+        `;
+      }
+      // Step 4: Receiver or Mailbox
+      else if (wizardStep === 4) {
+        if (wizardState.mode === "direct") {
+          html += `
+            <div class="wizard-step">
+              <b>Select Receiver Process:</b><br>
+              <select class="wizard-input" id="receiverSel">
+                ${wizardState.processNames.map((n, i) => `<option value="${n}" ${n===wizardState.receiver?"selected":""}>${n}</option>`).join("")}
+              </select>
+            </div>
+            <div class="wizard-nav">
+              <button class="toggle-btn" id="backBtn">Back</button>
+              <button class="toggle-btn" id="nextBtn">Next</button>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="wizard-step">
+              <b>Enter Mailbox Name:</b><br>
+              <input class="wizard-input" type="text" id="mailboxInput" maxlength="12" value="${wizardState.mailbox}">
+            </div>
+            <div class="wizard-nav">
+              <button class="toggle-btn" id="backBtn">Back</button>
+              <button class="toggle-btn" id="nextBtn">Next</button>
+            </div>
+          `;
+        }
+      }
+      // Step 5: Receiver (indirect) or Message (direct)
+      else if (wizardStep === 5) {
+        if (wizardState.mode === "direct") {
+          html += `
+            <div class="wizard-step">
+              <b>Enter Message to Send:</b><br>
+              <input class="wizard-input" type="text" id="messageInput" maxlength="40" value="${wizardState.message}">
+            </div>
+            <div class="wizard-nav">
+              <button class="toggle-btn" id="backBtn">Back</button>
+              <button class="toggle-btn" id="nextBtn">Next</button>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="wizard-step">
+              <b>Select Receiver Process:</b><br>
+              <select class="wizard-input" id="receiverSel">
+                ${wizardState.processNames.map((n, i) => `<option value="${n}" ${n===wizardState.receiver?"selected":""}>${n}</option>`).join("")}
+              </select>
+            </div>
+            <div class="wizard-nav">
+              <button class="toggle-btn" id="backBtn">Back</button>
+              <button class="toggle-btn" id="nextBtn">Next</button>
+            </div>
+          `;
+        }
+      }
+      // Step 6: Message (indirect)
+      else if (wizardStep === 6) {
+        html += `
+          <div class="wizard-step">
+            <b>Enter Message to Send:</b><br>
+            <input class="wizard-input" type="text" id="messageInput" maxlength="40" value="${wizardState.message}">
+          </div>
+          <div class="wizard-nav">
+            <button class="toggle-btn" id="backBtn">Back</button>
+            <button class="toggle-btn" id="nextBtn">Next</button>
+          </div>
+        `;
+      }
+      // Step 7: Show summary and diagram
+      else if (wizardStep === 7) {
+        html += `
+          <div class="wizard-step">
+            <b>Simulation Complete!</b>
+            <br>
+            <button class="toggle-btn" id="restartBtn" style="margin-top:1rem;">Restart</button>
+          </div>
+        `;
+      }
+      wizardArea.innerHTML = html;
+
+      // Attach event listeners
+      if (wizardStep === 0) {
+        document.getElementById('directBtn').onclick = () => {
+          wizardState.mode = "direct";
+          renderWizard();
+        };
+        document.getElementById('indirectBtn').onclick = () => {
+          wizardState.mode = "indirect";
+          renderWizard();
+        };
+        if (wizardState.mode && document.getElementById('nextBtn')) {
+          document.getElementById('nextBtn').onclick = () => {
+            wizardStep = 1;
+            renderWizard();
+          };
+        }
+      }
+      if (wizardStep === 1) {
+        document.getElementById('numProcInput').focus();
+        document.getElementById('backBtn').onclick = () => {
+          wizardStep = 0;
+          renderWizard();
+        };
+        document.getElementById('nextBtn').onclick = () => {
+          let n = parseInt(document.getElementById('numProcInput').value, 10);
+          if (isNaN(n) || n < 2 || n > 10) {
+            alert("Enter a number between 2 and 10.");
+            return;
+          }
+          wizardState.numProcesses = n;
+          wizardState.processNames = Array.from({length: n}, (_,i)=>`P${i+1}`);
+          wizardStep = 2;
+          renderWizard();
+        };
+      }
+      if (wizardStep === 2) {
+        for (let i = 0; i < wizardState.numProcesses; i++) {
+          document.getElementById(`procName${i}`).oninput = (e) => {
+            wizardState.processNames[i] = e.target.value;
+          };
+        }
+        document.getElementById('backBtn').onclick = () => {
+          wizardStep = 1;
+          renderWizard();
+        };
+        document.getElementById('nextBtn').onclick = () => {
+          let names = [];
+          for (let i = 0; i < wizardState.numProcesses; i++) {
+            let val = document.getElementById(`procName${i}`).value.trim();
+            if (!val) {
+              alert("All process names are required.");
+              return;
+            }
+            names.push(val);
+          }
+          // Check for duplicates
+          let nameSet = new Set(names);
+          if (nameSet.size !== names.length) {
+            alert("Process names must be unique.");
+            return;
+          }
+          wizardState.processNames = names;
+          wizardState.sender = names[0];
+          wizardState.receiver = names[1];
+          wizardStep = 3;
+          renderWizard();
+        };
+      }
+      if (wizardStep === 3) {
+        document.getElementById('senderSel').onchange = (e) => {
+          wizardState.sender = e.target.value;
+        };
+        document.getElementById('backBtn').onclick = () => {
+          wizardStep = 2;
+          renderWizard();
+        };
+        document.getElementById('nextBtn').onclick = () => {
+          wizardStep = 4;
+          renderWizard();
+        };
+      }
+      if (wizardStep === 4) {
+        if (wizardState.mode === "direct") {
+          document.getElementById('receiverSel').onchange = (e) => {
+            wizardState.receiver = e.target.value;
+          };
+          document.getElementById('backBtn').onclick = () => {
+            wizardStep = 3;
+            renderWizard();
+          };
+          document.getElementById('nextBtn').onclick = () => {
+            if (wizardState.receiver === wizardState.sender) {
+              alert("Sender and receiver must be different.");
+              return;
+            }
+            wizardStep = 5;
+            renderWizard();
+          };
+        } else {
+          document.getElementById('mailboxInput').focus();
+          document.getElementById('mailboxInput').oninput = (e) => {
+            wizardState.mailbox = e.target.value;
+          };
+          document.getElementById('backBtn').onclick = () => {
+            wizardStep = 3;
+            renderWizard();
+          };
+          document.getElementById('nextBtn').onclick = () => {
+            if (!wizardState.mailbox.trim()) {
+              alert("Mailbox name cannot be empty.");
+              return;
+            }
+            wizardStep = 5;
+            renderWizard();
+          };
+        }
+      }
+      if (wizardStep === 5) {
+        if (wizardState.mode === "direct") {
+          document.getElementById('messageInput').focus();
+          document.getElementById('messageInput').oninput = (e) => {
+            wizardState.message = e.target.value;
+          };
+          document.getElementById('backBtn').onclick = () => {
+            wizardStep = 4;
+            renderWizard();
+          };
+          document.getElementById('nextBtn').onclick = () => {
+            if (!wizardState.message.trim()) {
+              alert("Message cannot be empty.");
+              return;
+            }
+            wizardStep = 7;
+            renderWizard();
+            updateDiagramAndExplanation();
+          };
+        } else {
+          document.getElementById('receiverSel').onchange = (e) => {
+            wizardState.receiver = e.target.value;
+          };
+          document.getElementById('backBtn').onclick = () => {
+            wizardStep = 4;
+            renderWizard();
+          };
+          document.getElementById('nextBtn').onclick = () => {
+            if (wizardState.receiver === wizardState.sender) {
+              alert("Sender and receiver must be different.");
+              return;
+            }
+            wizardStep = 6;
+            renderWizard();
+          };
+        }
+      }
+      if (wizardStep === 6) {
+        document.getElementById('messageInput').focus();
+        document.getElementById('messageInput').oninput = (e) => {
+          wizardState.message = e.target.value;
+        };
+        document.getElementById('backBtn').onclick = () => {
+          wizardStep = 5;
+          renderWizard();
+        };
+        document.getElementById('nextBtn').onclick = () => {
+          if (!wizardState.message.trim()) {
+            alert("Message cannot be empty.");
+            return;
+          }
+          wizardStep = 7;
+          renderWizard();
+          updateDiagramAndExplanation();
+        };
+      }
+      if (wizardStep === 7) {
+        document.getElementById('restartBtn').onclick = () => {
+          wizardState = {
+            mode: null,
+            numProcesses: 2,
+            processNames: ["P1", "P2"],
+            sender: "P1",
+            receiver: "P2",
+            message: "Data",
+            mailbox: "Mbox1"
+          };
+          wizardStep = 0;
+          renderWizard();
+          updateDiagramAndExplanation();
+        };
+      }
+      // Update diagram/explanation on every step
+      updateDiagramAndExplanation();
+    }
+
+    function updateDiagramAndExplanation() {
+      // Only show diagram/explanation on summary step
+      if (wizardStep !== 7) {
+        diagramArea.innerHTML = "";
+        explanationBox.innerHTML = "";
+        tipBox.innerHTML = "";
+        return;
+      }
+      // Dynamic message box sizing
+      let message = wizardState.message || "Data";
+      let msgLen = message.length;
+      let msgWidth = Math.max(60, Math.min(220, msgLen * 11)); // 11px per char, min 60, max 220
+      let msgX = 175 - msgWidth/2;
+      let msgTextX = 175;
+
+      if (wizardState.mode === "direct") {
+        const sender = wizardState.sender;
+        const receiver = wizardState.receiver;
+        // SVG for direct
+        diagramArea.innerHTML = `
+<svg class="diagram-svg" viewBox="0 0 350 100">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#39ff14"/>
+    </marker>
+  </defs>
+  <rect x="20" y="30" width="60" height="40" class="proc-box"/>
+  <text x="50" y="55" text-anchor="middle" class="proc-label">${sender}</text>
+  <rect x="270" y="30" width="60" height="40" class="proc-box"/>
+  <text x="300" y="55" text-anchor="middle" class="proc-label">${receiver}</text>
+  <line x1="80" y1="50" x2="270" y2="50" class="arrow"/>
+  <rect x="${msgX}" y="38" width="${msgWidth}" height="24" rx="7" class="message-rect"/>
+  <text x="${msgTextX}" y="54" text-anchor="middle" class="message-text">${message}</text>
+</svg>
+        `;
+        explanationBox.innerHTML = `
+<b>Send(${sender}, ${receiver}, "${message}")</b><br>
+<b>Receive(${receiver}, ${sender}, "${message}")</b><br>
+<br>
+Communication link is established <b>between exactly two processes</b>.
+        `;
+        tipBox.innerHTML = `🧠 <b>Tip:</b> The message flows directly from <b>${sender}</b> to <b>${receiver}</b>.`;
+      } else {
+        const sender = wizardState.sender;
+        const mailbox = wizardState.mailbox;
+        const receiver = wizardState.receiver;
+        // SVG for indirect
+        diagramArea.innerHTML = `
+<svg class="diagram-svg" viewBox="0 0 350 100">
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#00ff99"/>
+    </marker>
+  </defs>
+  <rect x="20" y="30" width="60" height="40" class="proc-box"/>
+  <text x="50" y="55" text-anchor="middle" class="proc-label">${sender}</text>
+  <rect x="270" y="30" width="60" height="40" class="proc-box"/>
+  <text x="300" y="55" text-anchor="middle" class="proc-label">${receiver}</text>
+  <rect x="135" y="18" width="80" height="64" rx="12" class="mailbox-box"/>
+  <text x="175" y="38" text-anchor="middle" class="mailbox-label">${mailbox}</text>
+  <line x1="80" y1="50" x2="135" y2="50" class="arrow-indirect"/>
+  <line x1="215" y1="50" x2="270" y2="50" class="arrow-indirect"/>
+  <rect x="${msgX}" y="60" width="${msgWidth}" height="20" rx="6" class="message-rect"/>
+  <text x="${msgTextX}" y="75" text-anchor="middle" class="message-text">${message}</text>
+</svg>
+        `;
+        explanationBox.innerHTML = `
+<b>Send(${sender}, ${mailbox}, "${message}")</b><br>
+<b>Receive(${receiver}, ${mailbox}, "${message}")</b><br>
+<br>
+Processes communicate <b>through a shared mailbox</b> (not directly).
+        `;
+        tipBox.innerHTML = `🧠 <b>Tip:</b> The mailbox <b>${mailbox}</b> acts as an intermediary. Multiple senders/receivers can use the same mailbox.`;
+      }
+    }
+
+    // Start wizard
+    renderWizard();
+  </script>
+</body>
+</html>

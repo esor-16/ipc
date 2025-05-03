@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Documentation | Inter Process Communication</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Futuristic font and styles -->
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', Arial, sans-serif;
+      background: #101820;
+      color: #e0ffe0;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    #dots-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .doc-header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      background: linear-gradient(90deg, #39ff14 0%, #00ff99 100%);
+      color: #101820;
+      font-size: 2.2rem;
+      font-weight: 850;
+      padding: 1.1rem 0;
+      box-shadow: 0 0 32px #39ff14cc, 0 2px 8px #000a, 0 0 80px #39ff1444 inset;
+      letter-spacing: 2px;
+      text-align: center;
+      text-shadow: 0 0 12px #fff8, 0 0 8px #39ff14cc;
+      border-bottom: 4px solid #00ff99;
+      z-index: 1002;
+      text-transform: uppercase;
+      user-select: none;
+      border-radius: 0 0 24px 24px;
+      font-family: 'Orbitron', Arial, sans-serif;
+      -webkit-text-stroke: 1.5px #101820;
+    }
+    .menu-btn {
+      display: none;
+    }
+    .menu-icon {
+      cursor: pointer;
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      left: 1rem;
+      top: 1.3rem; /* below the about-bar */
+      z-index: 3000;
+      background: rgba(16, 24, 32, 0.7);
+      border-radius: 12px;
+      box-shadow: 0 0 12px #39ff14cc;
+      transition: background 0.2s;
+    }
+    .menu-icon:hover {
+      background: rgba(57, 255, 20, 0.15);
+      box-shadow: 0 0 24px #39ff14cc;
+    }
+    .menu-icon .navicon {
+      background: #39ff14;
+      display: block;
+      height: 5px;
+      width: 32px;
+      border-radius: 3px;
+      position: relative;
+      transition: background .2s;
+      box-shadow: 0 0 8px #39ff14cc;
+    }
+    .menu-icon .navicon:before,
+    .menu-icon .navicon:after {
+      content: '';
+      background: #39ff14;
+      display: block;
+      height: 5px;
+      width: 32px;
+      border-radius: 3px;
+      position: absolute;
+      transition: all .2s;
+      box-shadow: 0 0 8px #39ff14cc;
+    }
+    .menu-icon .navicon:before {
+      top: -12px;
+    }
+    .menu-icon .navicon:after {
+      top: 12px;
+    }
+    .doc-container {
+      display: flex;
+      margin-top: 9em;
+      min-height: 100vh;
+      z-index: 2;
+      position: relative;
+    }
+    .doc-sidebar {
+      width: 240px;
+      min-width: 180px;
+      background: rgba(20, 30, 40, 0.98);
+      border-right: 2px solid #39ff14;
+      box-shadow: 2px 0 24px #39ff1444;
+      padding: 2.5rem 1.2rem 2rem 1.2rem;
+      position: sticky;
+      top: 7.5rem;
+      height: fit-content;
+      align-self: flex-start;
+      z-index: 10;
+      border-radius: 0 18px 18px 0;
+      margin-bottom: 2rem;
+    }
+    .doc-sidebar nav {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+    .doc-sidebar a {
+      color: #39ff14;
+      text-decoration: none;
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 0.5rem 2rem;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+    }
+    .doc-sidebar a:hover, .doc-sidebar a.active {
+      background: #39ff1433;
+      color: #fff;
+    }
+    .doc-content {
+      flex: 1;
+      padding: 2.5rem 2.5rem 2.5rem 2.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+      z-index: 2;
+    }
+    .doc-section {
+      margin-bottom: 3.5rem;
+      background: rgba(20, 30, 40, 0.92);
+      border-radius: 18px;
+      box-shadow: 0 4px 32px #39ff1444, 0 0 40px #39ff1422 inset;
+      padding: 2rem 2rem 1.5rem 2rem;
+      border-left: 4px solid #39ff14;
+      border-bottom: 2px solid #00ff99;
+    }
+    .doc-section h2 {
+      color: #39ff14;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 1.2rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px #39ff14aa;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    /* Code block styling */
+    .doc-section pre {
+      background: #181f2b;
+      color: #e0ffe0;
+      font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+      font-size: 1.05rem;
+      border-radius: 8px;
+      padding: 1rem;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      box-shadow: 0 2px 12px #39ff1444;
+      /* Ensures code blocks stand out */
+      border-left: 4px solid #39ff14;
+    }
+    /* Remove double styling for code within pre blocks */
+    .doc-section pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    /* Inline code styling */
+    .doc-section code {
+      background: #232b3a;
+      color: #39ff14;
+      font-family: 'Fira Mono', 'Consolas', 'Menlo', monospace;
+      font-size: 1.01em;
+      border-radius: 4px;
+      padding: 0.15em 0.4em;
+    }
+    .doc-section ul, .doc-section ol {
+      margin-left:4rem;
+      margin-bottom: 1rem;
+    }
+    .doc-section li {
+      margin-bottom: 0.5rem;
+    }
+    .doc-footer {
+      text-align: center;
+      padding: 1.5rem 0 1rem 0;
+      background: #181f2b;
+      color: #39ff14;
+      font-size: 1rem;
+      letter-spacing: 1px;
+      z-index: 1;
+      border-top: 1px solid #39ff14;
+      box-shadow: 0 -2px 16px #39ff1444;
+      margin-top: 2rem;
+    }
+    /* Responsive */
+    @media (max-width: 900px) {
+      .doc-container {
+        flex-direction: column;
+      }
+      .doc-sidebar {
+        width: 100vw;
+        min-width: 0;
+        border-radius: 0 0 18px 18px;
+        border-right: none;
+        border-bottom: 2px solid #39ff14;
+        box-shadow: 0 2px 24px #39ff1444;
+        margin-bottom: 2rem;
+        position: static;
+        top: 0;
+        padding: 1.2rem 0.7rem 1.2rem 0.7rem;
+      }
+      .doc-content {
+        padding: 1.2rem 0.7rem 1.2rem 0.7rem;
+      }
+    }
+    /* Diagram and flowchart centering */
+    .doc-diagram, .doc-flowchart {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 1.5rem 0;
+    }
+    /* For mermaid diagrams */
+    .mermaid {
+      background: #181f2b;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 12px #39ff1444;
+      width: 100%;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+  </style>
+  <!-- Mermaid for diagrams/flowcharts -->
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+  </script>
+</head>
+<body>
+  <canvas id="dots-bg"></canvas>
+  <div class="doc-header-bar">Inter Process Communication</div>
+  <input type="checkbox" id="menu-btn" class="menu-btn">
+  <label for="menu-btn" class="menu-icon">
+    <span class="navicon"></span>
+  </label>
+  <nav class="side-menu">
+    <a href="index.html"><span>🏠</span> Home</a>
+    <a href="shared-memory.html"><span>💾</span> Shared Memory</a>
+    <a href="message-passing.html"><span>📨</span> Message Passing</a>
+    <a href="documentation.html"><span>📚</span> Documentation</a>
+    <a href="about.html"><span>📖</span> About</a>
+    <a href="github.html"><span>🐱</span> GitHub</a>
+  </nav>
+  <div class="doc-container">
+    <aside class="doc-sidebar">
+      <nav>
+        <a href="#premise"><i class="fas fa-lightbulb"></i> Premise</a>
+        <a href="#problem"><i class="fas fa-exclamation-triangle"></i> Problem</a>
+        <a href="#solution"><i class="fas fa-cogs"></i> Solution</a>
+        <a href="#motivation"><i class="fas fa-bolt"></i> Motivation</a>
+        <a href="#flowchart"><i class="fas fa-project-diagram"></i> Flowchart</a>
+        <a href="#pseudocode"><i class="fas fa-code"></i> Pseudocode</a>
+        <a href="#techstack"><i class="fas fa-tools"></i> Tech Stack</a>
+        <a href="learn-more"><i class="fas fa-tool"></i> Learn More</a>
+      </nav>
+    </aside>
+    <main class="doc-content">
+      <section class="doc-section" id="premise">
+        <h2>Premise</h2>
+        <p>
+          The <b>Inter Process Communication (IPC)</b> project demonstrates key OS concepts by visualizing and simulating shared memory and message passing mechanisms. <br>
+          <b>Faculty In-Charge:</b> Ms. Deepthi Shetty<br>
+          <b>Team Members:</b> M KISHORE, V ESWAR ACHUT
+        </p>
+      </section>
+      <section class="doc-section" id="problem">
+        <h2>Problem</h2>
+        <p>
+          In modern operating systems, processes often need to communicate and synchronize with each other. However, improper resource allocation and lack of synchronization can lead to deadlocks, starvation, and race conditions. The challenge is to design and demonstrate safe, efficient IPC mechanisms.
+        </p>
+        <div class="doc-diagram">
+          <div class="mermaid">
+            graph TD
+              P1((P1))
+              P2((P2))
+              R1((R1))
+              R2((R2))
+              P1-->|requests|R1
+              R1-->|allocated|P2
+              P2-->|requests|R2
+              R2-->|allocated|P1
+          </div>
+        </div>
+        <p style="font-size:0.98rem; color:#baffc9;">
+          <i>Resource Allocation Graph showing a potential deadlock between two processes and two resources.</i>
+        </p>
+      </section>
+      <section class="doc-section" id="solution">
+        <h2>Solution</h2>
+        <p>
+          The project implements both <b>Shared Memory</b> (using the Producer-Consumer problem) and <b>Message Passing</b> (with direct/indirect, synchronous/asynchronous, and various buffering strategies). Visualizations and interactive demos help users understand synchronization, deadlock avoidance, and safe resource sharing.
+        </p>
+      </section>
+      <section class="doc-section" id="motivation">
+        <h2>Motivation</h2>
+        <p>
+          Many students struggle to grasp IPC concepts due to their abstract nature. By providing interactive, visual explanations, this project aims to bridge the gap between theory and practice, making OS concepts more accessible and engaging.
+        </p>
+      </section>
+      <section class="doc-section" id="flowchart">
+        <h2>Flowchart</h2>
+        <div class="doc-flowchart">
+          <div class="mermaid">
+            flowchart TD
+              Start([Start])
+              Input[/"Input Buffer Size"/]
+              Producer{{Producer}}
+              Consumer{{Consumer}}
+              Buffer[(Buffer)]
+              End([End])
+              Start --> Input --> Buffer
+              Buffer --> Producer
+              Buffer --> Consumer
+              Producer -->|Produce Item| Buffer
+              Consumer -->|Consume Item| Buffer
+              Buffer --> End
+          </div>
+        </div>
+      </section>
+      <section class="doc-section" id="pseudocode">
+        <h2>Pseudocode</h2>
+        <pre><code>// Producer-Consumer Problem (Shared Memory)
+semaphore mutex = 1
+semaphore full = 0
+semaphore empty = N
+
+procedure producer() {
+  while (true) {
+    wait(empty)
+    wait(mutex)
+    // add item to buffer
+    signal(mutex)
+    signal(full)
+  }
+}
+
+procedure consumer() {
+  while (true) {
+    wait(full)
+    wait(mutex)
+    // remove item from buffer
+    signal(mutex)
+    signal(empty)
+  }
+}
+        </code></pre>
+      </section>
+      <section class="doc-section" id="techstack">
+        <h2>Tech Stack</h2>
+        <ul>
+          <li><b>HTML5, CSS3</b> – Structure and styling</li>
+          <li><b>JavaScript (ES6+)</b> – Interactivity and animations</li>
+          <li><b>Mermaid.js</b> – Diagrams and flowcharts</li>
+          <li><b>Font Awesome</b> – Icons</li>
+          <li><b>Firebase Hosting</b> – Deployment</li>
+          <li><b>Cloudflare</b> – CDN and security</li>
+        </ul>
+      </section>
+      <section class="doc-section" id="learn-more">
+        <h2>Learn More</h2>
+        <ul>
+          <li><a href="https://www.geeksforgeeks.org/inter-process-communication-ipc/" target="_blank" rel="noopener noreferrer">Inter Process Communication (IPC)</a></li>
+          <li><a href="https://www.geeksforgeeks.org/what-is-a-shared-memory/" target="_blank" rel="noopener noreferrer">Shared Memory</a></li>
+          <li><a href="https://www.tutorialspoint.com/what-is-the-shared-memory-concept-by-using-producer-consumer-problem" target="_blank" rel="noopener noreferrer">Shared Memory Concept in Producer-Consumer Problem</a></li>
+          <li><a href="https://www.tutorialspoint.com/what-is-message-passing-technique-in-os" target="_blank" rel="noopener noreferrer">Message Passing</a></li>
+          <li><a href="://ecomputernotes.com/fundamental/disk-operating-system/difference-between-direct-and-indirect-inter-process-communication" target="_blank" rel="noopener noreferrer">Direct and Indirect Inter-Process Communication</a></li>
+          <li><a href="https://www.mendix.com/blog/asynchronous-vs-synchronous-programming/#:~:text=Asynchronous%20is%20a%20non%2Dblocking%20architecture%2C%20so%20the%20execution%20of,on%20to%20the%20next%20iteration." target="_blank" rel="noopener noreferrer">Asynchronous vs synchronous</a></li>
+          <li><a href="https://www.geeksforgeeks.org/buffering-in-computer-network/" target="_blank" rel="noopener noreferrer">Buffering</a></li>
+        </ul>
+      </section>
+    </main>
+  </div>
+  <footer class="doc-footer">
+    © 2025 Inter Process Communication Project &mdash; Hosted on Firebase & Cloudflare
+  </footer>
+  <script src="dots.js"></script>
+</body>
+</html>

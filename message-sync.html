@@ -1,0 +1,713 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Inter Process Communication</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Rockids font: If you have the .ttf, use @font-face in CSS. Otherwise, fallback to a similar Google Font. -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Example fallback: -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <title>Synchronization Simulation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+ 
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+      background: #101820;
+      color: #101820;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    #background-dots {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .dot {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      opacity: 0.85;
+      box-shadow: 0 0 8px 2px #fff, 0 0 16px 4px rgba(237, 235, 235, 0.956);
+      animation: shake 1.5s infinite alternate ease-in-out;
+    }
+    @keyframes shake {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(1.5px, -1.5px); }
+    }
+    #container {
+      position: relative;
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 1rem 2rem 3rem 2rem;
+      background: #101820;
+      border: 2px solid #3fb32a;
+      border-radius: 14px;
+      box-shadow: 0 0 24px #39ff14cc;
+      z-index: 1;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #39f30f;
+      text-shadow: 0 0 12px #000000cc;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    #processes {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .process {
+      background: #25c708;
+      border: 2.5px solid #26ff00cc;
+      border-radius: 18px;
+      width: 140px;
+      height: 140px;
+      padding: 1rem;
+      box-shadow: 0 0 24px #39ff14cc, 0 0 32px rgba(255, 255, 255, 0.915) inset;
+      position: relative;
+      margin: 0.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: background 0.2s, box-shadow 0.2s;
+      overflow: hidden;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+      color: #e3e6ea;
+    }
+    .process h2 {
+      margin: 0;
+      text-align: center;
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.929);
+      font-size: 1.2rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      z-index: 1;
+      color: #111214;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    .status {
+      font-size: 1.1rem;
+      font-weight: bold;
+      padding: 0.4rem 0.7rem;
+      border: 2px solid #101820;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.94);
+      box-shadow: 0 0 16px rgba(255, 255, 255, 0.953), 0 0 8px #39ff14cc;
+      margin-top: 0.9rem;
+      text-align: center;
+      z-index: 1;
+      letter-spacing: 1px;
+      color: #0a0b0e;
+      transition: background 0.2s, color 0.2s, border 0.2s;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    .status.ready {
+      background: #fff;
+      color: #081017;
+      border-color: #101820;
+      box-shadow: 0 0 18px #39ff14cc, 0 0 8px rgba(255, 255, 255, 0.937);
+      text-shadow: 0 0 8px #fff8;
+    }
+    .status.waiting {
+      background: rgba(255, 255, 255, 0.93);
+      color: #101820;
+      border-color: #101820;
+      box-shadow: 0 0 18px #39ff14cc, 0 0 8px rgba(255, 255, 255, 0.962);
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.968);
+    }
+    .process-role-label {
+    color: #39ff14;
+    font-family: 'Orbitron', Arial, sans-serif;
+    font-size: 0.95rem;
+    font-weight: bold;
+    margin-bottom: 0.3rem;
+    letter-spacing: 1px;
+    }
+    .status.blocked {
+      background: rgba(255, 255, 255, 0.97);
+      color: #101820;
+      border-color: #101820;
+      box-shadow: 0 0 18px #39ff14cc, 0 0 8px rgba(255, 255, 255, 0.953);
+      text-shadow: 0 0 8px rgba(255, 255, 255, 0.948);
+    }
+    #controls {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    button {
+      background: #39ff14;
+      border: 1.5px solid #101820;
+      color: #070c12;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+      padding: 0.5rem 1rem;
+      margin: 0 0.5rem 0.5rem 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1.08rem;
+      letter-spacing: 1px;
+      box-shadow: 0 0 8px #39ff14cc;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+    }
+    button:hover:not(:disabled) {
+      background: #39ff14cc;
+      color: #101820;
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.922);
+    }
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    #mode-toggle {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      gap: 2.5rem;
+      margin-bottom: 1.2rem;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+      user-select: none;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    #mode-toggle div {
+      cursor: pointer;
+      font-weight: bold;
+      color: #101820;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 50px;
+      padding: 0.6rem 2.2rem;
+      font-size: 1.08rem;
+      box-shadow: 0 0 10px #39ff14cc;
+      background: #39ff14;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      border: 2px solid #101820;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    #mode-toggle div[aria-pressed="true"] {
+      background: #39ff14cc;
+      color: #101820;
+      box-shadow: 0 0 18px rgba(255, 255, 255, 0.905);
+      border-color: #101820;
+    }
+    #mode-toggle div[aria-pressed="false"]:hover {
+      background: rgba(255, 255, 255, 0.907);
+      color: #dfe6ec;
+      box-shadow: 0 0 18px #39ff14cc;
+      border-color: #101820;
+    }
+    #sender-select, #receiver-select {
+      background-color: #fff;
+      color: #0b1218;
+      border: 2px solid #39ff14;
+      border-radius: 8px;
+      padding: 0.4rem 0.7rem;
+      font-weight: bold;
+      font-size: 1.05rem;
+      box-shadow: 0 0 8px #39ff14cc;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    #message-box, #log-box {
+      background: rgba(255, 255, 255, 0.919);
+      border: 1px solid #39ff14;
+      border-radius: 8px;
+      color:  #150c0c;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+      font-size: 1.08rem;
+      box-shadow: 0 0 10px #39ff14cc inset;
+      margin: 0 auto 1rem auto;
+      max-width: 600px;
+      padding: 0.5rem 1rem;
+      overflow-y: auto;
+    }
+    #message-box { height: 100px; }
+    #log-box { height: 150px; }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      border: 0;
+    }
+    #process-modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(16, 24, 32, 0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    #process-modal-content {
+      background: #101820;
+      border: 2px solid #39ff14;
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      color: #fefcfc;
+      box-shadow: 0 0 15px #39ff14;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    #process-modal-content label {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    #process-modal-content input[type="number"] {
+      width: 60px;
+      font-size: 1.2rem;
+      padding: 0.3rem;
+      border-radius: 6px;
+      border: 1.5px solid #39ff14;
+      background: rgba(238, 232, 232, 0.922);
+      color: #101820;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+    }
+    #process-modal-content button {
+      background: #39ff14;
+      border: none;
+      color: #101820;
+      font-weight: bold;
+      padding: 0.5rem 1.5rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.1rem;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    #process-modal-content button:hover {
+      background: #39ff14cc;
+    }
+  </style>
+</head>
+<div id="background-dots"></div>
+
+
+<div id="process-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div id="process-modal-content">
+    <h2 id="modal-title">Enter Number of Processes</h2>
+    <label for="process-count-input">Number of processes (minimum 2):</label>
+    <input type="number" id="process-count-input" min="2" max="10" value="2" />
+    <br />
+    <button id="process-count-submit">Start Simulation</button>
+  </div>
+</div>
+
+<div id="container" role="main" aria-label="Synchronization Simulation" style="display:none;">
+  <h1>Synchronization Simulation</h1>
+  <div id="mode-toggle" aria-label="Select synchronization mode">
+    <div id="sync-box" tabindex="0" role="button" aria-pressed="true" aria-label="Synchronous mode">
+      Synchronous (Blocking)
+    </div>
+    <div id="async-box" tabindex="0" role="button" aria-pressed="false" aria-label="Asynchronous mode">
+      Asynchronous (Non-blocking)
+    </div>
+  </div>
+  <div id="processes" aria-live="polite" aria-atomic="true">
+    <!-- Process boxes will be dynamically generated here -->
+  </div>
+  <div id="step-explanation" style="max-width: 600px; margin: 0 auto 1rem auto; color: #101820; font-family: 'Rockids', 'Orbitron', Arial, sans-serif; background: #fff; border: 1px solid #39ff14; border-radius: 8px; padding: 1rem; box-shadow: 0 0 10px #39ff14 inset;">
+    <div id="mode-explanation"></div>
+    <div id="step-detail">
+      <strong>Step Explanation:</strong>
+      <p id="explanation-text">Select mode and send messages to see how synchronization works.</p>
+    </div>
+  </div>
+  <div id="process-selectors" style="max-width: 600px; margin: 0 auto 1rem auto; display: none; justify-content: center; gap: 2.5rem; align-items: center;">
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      <span class="process-role-label">Sender Process</span>
+      <label for="sender-select" class="sr-only">Sender:</label>
+      <select id="sender-select" aria-label="Select sender process"></select>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: flex-start;">
+      <span class="process-role-label">Receiver Process</span>
+      <label for="receiver-select" class="sr-only">Receiver:</label>
+      <select id="receiver-select" aria-label="Select receiver process"></select>
+    </div>
+  </div>
+  <div id="controls" aria-label="Controls" style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+    <button id="send-btn" aria-describedby="send-desc">Send Message</button>
+    <button id="make-ready-btn" aria-describedby="ready-desc">Make Receiver Ready</button>
+    <button id="receive-btn" aria-describedby="receive-desc">Receive Message</button>
+  </div>
+  <div id="send-desc" class="sr-only">Click to send a message from Sender to Receiver.</div>
+  <div id="ready-desc" class="sr-only">Click to make the Receiver ready to receive message (only for synchronous mode).</div>
+  <div id="receive-desc" class="sr-only">Click to receive message from queue (only for asynchronous mode).</div>
+  <div id="message-box" aria-live="polite" aria-atomic="true" aria-label="Message box" tabindex="0"></div>
+  <div id="log-box" aria-live="polite" aria-atomic="true" aria-label="Log box" tabindex="0"></div>
+</div>
+
+<script>
+  
+  // White shaking dots
+  const backgroundDots = document.getElementById('background-dots');
+  const dotCount = 700;
+  for (let i = 0; i < dotCount; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.style.top = Math.random() * 100 + '%';
+    dot.style.left = Math.random() * 100 + '%';
+    dot.style.animationDelay = (Math.random() * 2.5) + 's';
+    backgroundDots.appendChild(dot);
+  }
+
+  const syncBox = document.getElementById('sync-box');
+  const asyncBox = document.getElementById('async-box');
+  const senderSelect = document.getElementById('sender-select');
+  const receiverSelect = document.getElementById('receiver-select');
+  const processSelectors = document.getElementById('process-selectors');
+  const explanationText = document.getElementById('explanation-text');
+  const processModal = document.getElementById('process-modal');
+  const processCountInput = document.getElementById('process-count-input');
+  const processCountSubmit = document.getElementById('process-count-submit');
+  const container = document.getElementById('container');
+  const processesDiv = document.getElementById('processes');
+  const sendBtn = document.getElementById('send-btn');
+  const makeReadyBtn = document.getElementById('make-ready-btn');
+  const receiveBtn = document.getElementById('receive-btn');
+  const messageBox = document.getElementById('message-box');
+  const logBox = document.getElementById('log-box');
+  let mode = 'sync'; // sync or async
+  let messageQueue = [];
+  let messageInTransit = false;
+  let receiverReady = false;
+  let senderState = 'ready';
+  let receiverState = 'ready';
+  let processCount = 2;
+  let processElements = [];
+  let processStatusSpans = [];
+  
+  // Mode explanations with icons and bullet points
+  const modeExplanations = {
+    sync: `
+      <h3 style="margin:0 0 0.5rem 0;font-size:1.13rem;font-weight:bold;display:flex;align-items:center;gap:0.5em;">
+        🔒 <b>Synchronous Communication (Blocking)</b>
+      </h3>
+      <ul style="margin:0 0 1rem 1.5rem;padding:0;color:#101820;font-size:1.05rem;">
+        <li>The sender waits until the message is received.</li>
+        <li>The receiver must be ready to receive the message.</li>
+        <li>Both processes pause until the operation is complete.</li>
+      </ul>
+      <hr style="border:none;border-top:2px dashed #39ff14;margin:1.2rem 0;">
+    `,
+    async: `
+      <h3 style="margin:0 0 0.5rem 0;font-size:1.13rem;font-weight:bold;display:flex;align-items:center;gap:0.5em;">
+        🔓 <b>Asynchronous Communication (Non-blocking)</b>
+      </h3>
+      <ul style="margin:0 0 1rem 1.5rem;padding:0;color:#101820;font-size:1.05rem;">
+        <li>The sender does not wait after sending a message.</li>
+        <li>Messages are stored in a queue until received.</li>
+        <li>Processes continue execution independently.</li>
+      </ul>
+      <hr style="border:none;border-top:2px dashed #39ff14;margin:1.2rem 0;">
+    `
+  };
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+  function log(msg) {
+    const time = new Date().toLocaleTimeString();
+    logBox.textContent += `[${time}] ${msg}\n`;
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+  function showMessage(msg) {
+    messageBox.innerHTML = msg;
+  }
+  function clearMessage() {
+    messageBox.textContent = '';
+  }
+  function setProcessStatus(index, status) {
+    if (!processStatusSpans[index]) return;
+    processStatusSpans[index].textContent = capitalize(status);
+    processStatusSpans[index].className = 'status ' + status;
+  }
+  function disableButtons(disableSend, disableReady, disableReceive) {
+    sendBtn.disabled = disableSend;
+    makeReadyBtn.disabled = disableReady;
+    receiveBtn.disabled = disableReceive;
+  }
+  function createArrow(fromElem, toElem) {
+    const existingArrow = document.querySelector('svg.arrow');
+    if (existingArrow) existingArrow.remove();
+    const fromRect = fromElem.getBoundingClientRect();
+    const toRect = toElem.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const startX = fromRect.right - containerRect.left;
+    const startY = fromRect.top + fromRect.height / 2 - containerRect.top;
+    const endX = toRect.left - containerRect.left;
+    const endY = toRect.top + toRect.height / 2 - containerRect.top;
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", "arrow");
+    svg.setAttribute("width", containerRect.width);
+    svg.setAttribute("height", containerRect.height);
+    svg.style.position = "absolute";
+    svg.style.top = "0";
+    svg.style.left = "0";
+    svg.style.pointerEvents = "none";
+    const path = document.createElementNS(svgNS, "path");
+    const dx = endX - startX;
+    const dy = endY - startY;
+    const dr = Math.sqrt(dx * dx + dy * dy) * 0.6;
+    const sweepFlag = 1;
+    const d = `M${startX},${startY} A${dr},${dr} 0 0,${sweepFlag} ${endX},${endY}`;
+    path.setAttribute("d", d);
+    path.setAttribute("stroke-dasharray", "100");
+    path.setAttribute("stroke-dashoffset", "100");
+    path.setAttribute("marker-end", "url(#arrowhead)");
+    svg.appendChild(path);
+    const defs = document.createElementNS(svgNS, "defs");
+    const marker = document.createElementNS(svgNS, "marker");
+    marker.setAttribute("id", "arrowhead");
+    marker.setAttribute("markerWidth", "10");
+    marker.setAttribute("markerHeight", "7");
+    marker.setAttribute("refX", "0");
+    marker.setAttribute("refY", "3.5");
+    marker.setAttribute("orient", "auto");
+    const polygon = document.createElementNS(svgNS, "polygon");
+    polygon.setAttribute("points", "0 0, 10 3.5, 0 7");
+    polygon.setAttribute("fill", "#39ff14");
+    marker.appendChild(polygon);
+    defs.appendChild(marker);
+    svg.appendChild(defs);
+    container.appendChild(svg);
+    path.style.animation = 'arrow-move 1.5s forwards';
+  }
+  function removeArrow() {
+    const existingArrow = document.querySelector('svg.arrow');
+    if (existingArrow) existingArrow.remove();
+  }
+  function resetSimulation() {
+    messageQueue = [];
+    messageInTransit = false;
+    receiverReady = false;
+    senderState = 'ready';
+    receiverState = 'ready';
+    clearMessage();
+    logBox.textContent = '';
+    disableButtons(false, mode === 'async', mode === 'sync');
+    removeArrow();
+    for (let i = 0; i < processCount; i++) {
+      setProcessStatus(i, 'ready');
+    }
+  }
+  function synchronousSend() {
+    if (messageInTransit) return;
+    const senderIndex = parseInt(senderSelect.value);
+    const receiverIndex = parseInt(receiverSelect.value);
+    if (senderIndex === receiverIndex) {
+      alert('Sender and Receiver must be different processes.');
+      return;
+    }
+    messageInTransit = true;
+    senderState = 'waiting';
+    receiverState = 'blocked';
+    setProcessStatus(senderIndex, 'waiting');
+    setProcessStatus(receiverIndex, 'blocked');
+    showMessage(`P${senderIndex + 1}: Sending message "Hello" to P${receiverIndex + 1}...\nP${senderIndex + 1} is waiting for P${receiverIndex + 1} to be ready.\nThis is blocking because the sender waits until the receiver is ready.`);
+    log(`send(P${receiverIndex + 1}, "Hello") called`);
+    log(`P${senderIndex + 1} is blocked waiting for P${receiverIndex + 1}`);
+    disableButtons(true, false, true);
+    explanationText.textContent = `Synchronous send: P${senderIndex + 1} is blocked waiting for P${receiverIndex + 1}.`;
+  }
+  function makeReceiverReady() {
+    if (mode !== 'sync' || !messageInTransit) return;
+    const receiverIndex = parseInt(receiverSelect.value);
+    receiverReady = true;
+    receiverState = 'ready';
+    setProcessStatus(receiverIndex, 'ready');
+    showMessage(`P${receiverIndex + 1}: Ready to receive message.\nMessage transferred.\nBoth sender and receiver are unblocked.`);
+    log(`P${receiverIndex + 1} is ready`);
+    log(`receive(...) called`);
+    log(`Sender and receiver unblocked`);
+    createArrow(processElements[parseInt(senderSelect.value)], processElements[receiverIndex]);
+    setTimeout(() => {
+      senderState = 'ready';
+      receiverState = 'ready';
+      setProcessStatus(parseInt(senderSelect.value), 'ready');
+      setProcessStatus(receiverIndex, 'ready');
+      clearMessage();
+      removeArrow();
+      messageInTransit = false;
+      disableButtons(false, false, true);
+      explanationText.textContent = 'Synchronous send completed. Both sender and receiver are ready.';
+    }, 2000);
+  }
+  function asynchronousSend() {
+    if (messageInTransit) return;
+    const senderIndex = parseInt(senderSelect.value);
+    const receiverIndex = parseInt(receiverSelect.value);
+    if (senderIndex === receiverIndex) {
+      alert('Sender and Receiver must be different processes.');
+      return;
+    }
+    messageInTransit = true;
+    senderState = 'ready';
+    setProcessStatus(senderIndex, 'ready');
+    showMessage(`P${senderIndex + 1}: Sending message "Hello" to queue and continuing immediately.\nThis is non-blocking because the sender does not wait for the receiver.`);
+    log(`send(P${receiverIndex + 1}, "Hello") called`);
+    messageQueue.push({ from: senderIndex, to: receiverIndex, message: 'Hello' });
+    disableButtons(true, true, false);
+    explanationText.textContent = `Asynchronous send: P${senderIndex + 1} sends message to queue and continues without waiting.`;
+    setTimeout(() => {
+      messageInTransit = false;
+      disableButtons(false, true, false); // Re-enable Send Message after 2s
+    }, 2000);
+  }
+  function receiveMessage() {
+    const receiverIndex = parseInt(receiverSelect.value);
+    // Gather all messages in the queue for this receiver
+    const messagesForReceiver = messageQueue.filter(msg => msg.to === receiverIndex);
+    if (messagesForReceiver.length === 0) {
+      showMessage(`No messages in queue for P${receiverIndex + 1}.`);
+      explanationText.textContent = `No messages in queue for P${receiverIndex + 1}.`;
+      return;
+    }
+    // Remove all messages for this receiver from the queue
+    messageQueue = messageQueue.filter(msg => msg.to !== receiverIndex);
+    // Print all messages
+    let html = '';
+    messagesForReceiver.forEach(msg => {
+      html += `P${receiverIndex + 1}: Received message "${msg.message}" from P${msg.from + 1}.<br>`;
+      log(`receive(P${receiverIndex + 1}, "${msg.message}") called`);
+    });
+    setProcessStatus(receiverIndex, 'ready');
+    showMessage(html);
+    disableButtons(false, true, true);
+    explanationText.textContent = `Asynchronous receive: P${receiverIndex + 1} pulled ${messagesForReceiver.length} message(s) from queue.`;
+  }
+  function initializeProcesses() {
+    processesDiv.innerHTML = '';
+    processElements = [];
+    processStatusSpans = [];
+    for (let i = 0; i < processCount; i++) {
+      const processDiv = document.createElement('div');
+      processDiv.className = 'process';
+      processDiv.setAttribute('role', 'region');
+      processDiv.setAttribute('aria-label', `Process P${i + 1}`);
+      const processTitle = document.createElement('h2');
+      processTitle.textContent = `Process P${i + 1}`;
+      processDiv.appendChild(processTitle);
+      const statusSpan = document.createElement('span');
+      statusSpan.className = 'status ready';
+      statusSpan.textContent = 'Ready';
+      processDiv.appendChild(statusSpan);
+      processesDiv.appendChild(processDiv);
+      processElements.push(processDiv);
+      processStatusSpans.push(statusSpan);
+    }
+  }
+  processCountSubmit.addEventListener('click', () => {
+    const count = parseInt(processCountInput.value);
+    if (isNaN(count) || count < 2 || count > 10) {
+      alert('Please enter a valid number of processes between 2 and 10.');
+      return;
+    }
+    processCount = count;
+    processModal.style.display = 'none';
+    container.style.display = 'block';
+    initializeProcesses();
+    updateMode('sync');
+    setModeExplanation();
+  });
+  function updateProcessSelectorsVisibility() {
+    if (processCount > 2) {
+      processSelectors.style.display = 'flex';
+      populateProcessSelectors();
+    } else {
+      processSelectors.style.display = 'none';
+    }
+  }
+  function populateProcessSelectors() {
+    senderSelect.innerHTML = '';
+    receiverSelect.innerHTML = '';
+    for (let i = 0; i < processCount; i++) {
+      const optionSender = document.createElement('option');
+      optionSender.value = i;
+      optionSender.textContent = `Process P${i + 1}`;
+      senderSelect.appendChild(optionSender);
+      const optionReceiver = document.createElement('option');
+      optionReceiver.value = i;
+      optionReceiver.textContent = `Process P${i + 1}`;
+      receiverSelect.appendChild(optionReceiver);
+    }
+    if (processCount > 1) {
+      receiverSelect.selectedIndex = 1;
+    }
+  }
+  function setModeExplanation() {
+    const modeExplanationDiv = document.getElementById('mode-explanation');
+    modeExplanationDiv.innerHTML = modeExplanations[mode];
+  }
+  
+  function updateMode(newMode) {
+    mode = newMode;
+    resetSimulation();
+    if (mode === 'sync') {
+      disableButtons(false, false, true);
+      syncBox.setAttribute('aria-pressed', 'true');
+      asyncBox.setAttribute('aria-pressed', 'false');
+      syncBox.style.background = '#39ff14cc';
+      syncBox.style.color = '#101820';
+      asyncBox.style.background = '#39ff14';
+      asyncBox.style.color = '#101820';
+    } else {
+      disableButtons(false, true, false);
+      asyncBox.setAttribute('aria-pressed', 'true');
+      syncBox.setAttribute('aria-pressed', 'false');
+      asyncBox.style.background = '#39ff14cc';
+      asyncBox.style.color = '#101820';
+      syncBox.style.background = '#39ff14';
+      syncBox.style.color = '#101820';
+    }
+    updateProcessSelectorsVisibility();
+    explanationText.textContent = 'Select mode and send messages to see how synchronization works.';
+    setModeExplanation();
+  }
+  syncBox.addEventListener('click', () => updateMode('sync'));
+  asyncBox.addEventListener('click', () => updateMode('async'));
+  syncBox.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateMode('sync'); } });
+  asyncBox.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); updateMode('async'); } });
+  sendBtn.addEventListener('click', () => {
+    if (mode === 'sync') {
+      synchronousSend();
+    } else {
+      asynchronousSend();
+    }
+  });
+  makeReadyBtn.addEventListener('click', () => {
+    makeReceiverReady();
+  });
+  receiveBtn.addEventListener('click', () => {
+    receiveMessage();
+  });
+</script>
+<body>
+</html>

@@ -1,0 +1,361 @@
+/* Futuristic dark theme with green/blue accents */
+/* If you have Rockids.ttf, use this: */
+@font-face {
+  font-family: 'Rockids';
+  src: url('Rockids.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+body {
+  margin: 0;
+  font-family: 'Rockids', 'Orbitron', 'Segoe UI', 'Roboto', Arial, sans-serif;
+  background: #101820;
+  color: #e0ffe0;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* White shaking dots background */
+#dots-bg, #background-dots {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+}
+.dot {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  opacity: 0.8;
+  box-shadow: 0 0 6px 2px #39ff14, 0 0, 10px 4px #00ff99;
+  animation: shake 1.5s infinite alternate ease-in-out;
+}
+@keyframes shake {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(1.5px, -1.5px); }
+}
+
+/* Topic bar: full width, fixed, neon green, glowing, futuristic, extra bold */
+.topic-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  background: linear-gradient(90deg, #39ff14 0%, #00ff99 100%);
+  color: #101820;
+  font-size: 2.7rem;
+  font-weight: 900;
+  font-stretch: expanded;
+  padding: 1.2rem 0;
+  box-shadow: 0 0 32px #39ff14cc, 0 2px 8px #000a, 0 0 80px #39ff1444 inset;
+  letter-spacing: 4px;
+  text-align: center;
+  
+  border-bottom: 4px solid #00ff99;
+  z-index: 1002;
+  text-transform: uppercase;
+  user-select: none;
+  font-variation-settings: "wght" 900;
+  transition: box-shadow 0.2s;
+  /* Futuristic border effect */
+  border-radius: 0 0 24px 24px;
+  /* For extra boldness, use webkit text stroke if supported */
+  -webkit-text-stroke: 1.5px #101820;
+}
+
+.topic-bar:hover {
+  box-shadow: 0 0 64px #39ff14ee, 0 2px 8px #000a;
+}
+
+/* Header below the topic bar */
+header.futuristic-green-header {
+  display: flex;
+  align-items: flex-start;
+  background: transparent;
+  padding-top: 5.5rem; /* leave space for bar */
+  position: relative;
+  z-index: 1001;
+  min-height: 60px;
+}
+
+/* Hamburger menu - now fixed and always visible */
+.menu-btn {
+  display: none;
+}
+
+.menu-icon {
+  cursor: pointer;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  left: 1rem;
+  top: 1.3rem; /* below the topic bar */
+  z-index: 3000;
+  background: rgba(16, 24, 32, 0.7);
+  border-radius: 12px;
+  box-shadow: 0 0 12px #39ff14cc;
+  transition: background 0.2s;
+}
+
+.menu-icon:hover {
+  background: #39ff1444;
+  box-shadow: 0 0 24px #39ff14cc;
+}
+
+.menu-icon .navicon {
+  background: #39ff14;
+  display: block;
+  height: 5px;
+  width: 32px;
+  border-radius: 3px;
+  position: relative;
+  transition: background .2s;
+  box-shadow: 0 0 8px #39ff14cc;
+}
+.menu-icon .navicon:before,
+.menu-icon .navicon:after {
+  content: '';
+  background: #39ff14;
+  display: block;
+  height: 5px;
+  width: 32px;
+  border-radius: 3px;
+  position: absolute;
+  transition: all .2s;
+  box-shadow: 0 0 8px #39ff14cc;
+}
+.menu-icon .navicon:before {
+  top: -12px;
+}
+.menu-icon .navicon:after {
+  top: 12px;
+}
+
+/* Sidebar menu inside header */
+.side-menu {
+  position: fixed;
+  left: -270px; /* Increased negative left to hide the full width + extra */
+  top: 0;
+  width: 250px; /* Increased width for longer menu items */
+  height: 100%;
+  background: linear-gradient(180deg, #0c0f13 80%, #39ff1422 100%);
+  box-shadow: 2px 0 24px #39ff1444;
+  padding-top: 120px;
+  transition: left 0.3s;
+  z-index: 1004;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  border-right: 2px solid #39ff14;
+}
+
+.side-menu a {
+  color: #39ff14;
+  text-decoration: none;
+  font-size: 1.2rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 0 8px #39ff1444 inset;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+.side-menu a:hover {
+  background: #39ff1433;
+  color: #fff;
+  box-shadow: 0 0 16px #39ff14cc;
+}
+
+.menu-btn:checked ~ .menu-icon .navicon {
+  background: transparent;
+}
+.menu-btn:checked ~ .menu-icon .navicon:before {
+  transform: rotate(-45deg);
+  top: 0;
+}
+.menu-btn:checked ~ .menu-icon .navicon:after {
+  transform: rotate(45deg);
+  top: 0;
+}
+.menu-btn:checked ~ .side-menu {
+  left: 0;
+}
+
+/* Glassy futuristic card with enhanced green glow */
+.futuristic-card {
+  background: rgba(16, 24, 32, 0.7);
+  border: 0.20px solid #39ff14;
+  border-radius: 22px;
+  box-shadow:
+    0 0 0 4px #39ff14cc,
+    0 0 32px 8px #39ff14cc,
+    0 0 80px 24px #39ff1444 inset,
+    0 0 120px 32px #39ff14aa;
+  padding: 2.5rem 2rem;
+  margin: 7.5rem auto 2rem auto;
+  max-width: 540px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  position: relative;
+  animation: glassy-float 3s infinite alternate cubic-bezier(.4,0,.2,1);
+}
+
+@keyframes glassy-float {
+  0% { 
+    box-shadow:
+      0 0 0 4px #39ff14cc,
+      0 0 32px 8px #39ff14cc,
+      0 0 80px 24px #39ff1444 inset,
+      0 0 120px 32px #39ff14aa;
+  }
+  100% { 
+    box-shadow:
+      0 0 0 4px #39ff14ee,
+      0 0 48px 12px #39ff14ee,
+      0 0 120px 32px #39ff1466 inset,
+      0 0 160px 48px #39ff14cc;
+  }
+}
+
+/* Visually impressive neon heading (no black border, strong neon gradient and glow) */
+h1, .main-heading, .futuristic-heading, .futuristic-card h2 {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(90deg, #39ff14 10%, #00ff99 50%, #39ff14 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: #39ff14;
+ 
+  position: relative;
+  overflow: hidden;
+  font-family: 'Rockids', 'Orbitron', Arial, sans-serif;
+}
+
+/* Process ready boxes with different backgrounds */
+.process-ready-1 {
+  background: #39ff1444;
+  border: 2px solid #39ff14;
+  color: #101820;
+}
+.process-ready-2 {
+  background: rgba(40, 50, 70, 0.92);
+  border: 2px solid #39ff14;
+  color: #e0ffe0;
+}
+.process-ready-3 {
+  background: rgba(50, 40, 60, 0.92);
+  border: 2px solid #39ff14;
+  color: #e0ffe0;
+}
+.process-ready-4 {
+  background: rgba(60, 50, 40, 0.92);
+  border: 2px solid #39ff14;
+  color: #e0ffe0;
+}
+.process-ready-1, .process-ready-2, .process-ready-3, .process-ready-4 {
+  border-radius: 22px;
+  box-shadow: 0 4px 32px #39ff1444, 0 0 80px #39ff1422 inset, 0 0 24px #00ff99aa;
+  padding: 2.5rem 2rem;
+  margin: 2rem auto;
+  max-width: 540px;
+  text-align: center;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  position: relative;
+  animation: glassy-float 3s infinite alternate cubic-bezier(.4,0,.2,1);
+  font-family: 'Rockids', 'Orbitron', Arial, sans-serif;
+  font-size: 1.4rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 2.5rem;
+}
+
+.button-group button {
+  background: linear-gradient(90deg, #39ff14 60%, #00ff99 100%);
+  color: #101820;
+  border: none;
+  border-radius: 8px;
+  padding: 0.9rem 2.2rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 12px #39ff1444, 0 0 16px #00ff99aa;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  letter-spacing: 1px;
+  font-family: 'Rockids', 'Orbitron', Arial, sans-serif;
+}
+.button-group button:hover {
+  background: #39ff14cc;
+  color: #fff;
+  box-shadow: 0 0 24px #39ff14ee;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem 0;
+  background: #181f2b;
+  color: #39ff14;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  left: 0;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  z-index: 1;
+  border-top: 1px solid #39ff14;
+  box-shadow: 0 -2px 16px #39ff1444;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .futuristic-card {
+    margin: 1rem;
+    padding: 1rem;
+  }
+  .topic-bar {
+    font-size: 1.2rem;
+    padding: 0.6rem 0;
+    letter-spacing: 2px;
+  }
+  .side-menu {
+    width: 80vw;
+    min-width: 200px;
+    padding-top: 80px;
+    left: -85vw; /* Ensure it's fully hidden on mobile */
+  }
+  .menu-icon {
+    width: 40px;
+    height: 40px;
+    left: 0.5rem;
+    top: 1rem;
+  }
+  .menu-icon .navicon,
+  .menu-icon .navicon:before,
+  .menu-icon .navicon:after {
+    width: 24px;
+    height: 4px;
+  }
+}

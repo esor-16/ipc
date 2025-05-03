@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Message Passing</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    .side-menu {
+      position:fixed;
+      left: 0px;
+      top: 0;
+      width: 250px;
+      height: 100%;
+      background: linear-gradient(180deg, #181f2b 80%, #39ff1422 100%);
+      box-shadow: 2px 0 24px #39ff1444;
+      padding-top: 110px;
+      padding-left: 1rem;
+      transition: right 5s;
+      z-index: 1004;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      border-right: 2px solid #39ff14;
+    }
+    .side-menu a {
+      color: #39ff14;
+      text-decoration: none;
+      font-size: 1.2rem;
+      margin-left: 0.5rem;
+      padding: 0.8rem 0;
+      display: block;
+      border-radius: 8px 0 0 8px;
+      display: block;
+      align-items: center;
+      gap: 0.7em;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 8px #39ff1444 inset;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .side-menu a:hover {
+      background: #39ff1433;
+      color: #fff;
+      box-shadow: 0 0 16px #39ff14cc;
+    }
+    .menu-btn {
+      display: none;
+    }
+    .menu-icon {
+      position: fixed;
+      top: 32px;
+      left: 24px;
+      width: 44px;
+      height: 44px;
+      z-index: 1100;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .navicon {
+      background: none;
+      display: block;
+      width: 32px;
+      height: 4px;
+      position: relative;
+      background: #39ff14;
+      border-radius: 2px;
+      box-shadow: 0 0 8px #39ff14cc;
+      transition: background 0.2s;
+    }
+    .navicon:before,
+    .navicon:after {
+      content: '';
+      display: block;
+      width: 32px;
+      height: 4px;
+      background: #39ff14;
+      border-radius: 2px;
+      box-shadow: 0 0 8px #39ff14cc;
+      position: absolute;
+      left: 0;
+      transition: 0.3s;
+    }
+    .navicon:before {
+      top: -10px;
+    }
+    .navicon:after {
+      top: 10px;
+    }
+    .menu-btn:checked ~ .menu-icon .navicon {
+      background: transparent;
+    }
+    .menu-btn:checked ~ .menu-icon .navicon:before {
+      transform: rotate(-45deg);
+      top: 0;
+    }
+    .menu-btn:checked ~ .menu-icon .navicon:after {
+      transform: rotate(45deg);
+      top: 0;
+    }
+    .menu-btn:checked ~ .side-menu {
+      left: 0px;
+    }
+    .topic-bar {
+      background: #39ff14;
+      color: #101820;
+      text-align: center;
+      padding: 0.5rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      position: relative;
+      z-index: 1003;
+    }
+        /* Hamburger menu styles */
+      .menu-btn {
+      display: none;
+
+    }
+    .menu-icon {
+      cursor: pointer;
+      width: 24;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      left: 1rem;
+      top: 1.3rem; /* below the about-bar */
+      z-index: 3000;
+      background: rgba(16, 24, 32, 0.7);
+      border-radius: 12px;
+      box-shadow: 0 0 12px #39ff14cc;
+      transition: background 0.2s;
+    }
+    .menu-icon:hover {
+      background: rgba(57, 255, 20, 0.15);
+      box-shadow: 0 0 24px #39ff14cc;
+    }
+    .menu-icon .navicon {
+      background: #39ff14;
+      display: block;
+      height: 5px;
+      width: 32px;
+      border-radius: 3px;
+      position: relative;
+      transition: background .2s;
+      box-shadow: 0 0 8px #39ff14cc;
+    }
+    .menu-icon .navicon:before,
+    .menu-icon .navicon:after {
+      content: '';
+      background: #39ff14;
+      display: block;
+      height: 5px;
+      width: 32px;
+      border-radius: 3px;
+      position: absolute;
+      transition: all .2s;
+      box-shadow: 0 0 8px #39ff14cc;
+    }
+    .menu-icon .navicon:before {
+      top: -12px;
+    }
+    .menu-icon .navicon:after {
+      top: 12px;
+    }
+    body {
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      font-family: 'Orbitron', Arial, sans-serif;
+      color: #e0ffe0;
+      background: #101820;
+    }
+    #bg-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      background: #101820;
+    }
+    .container, .content, header, footer, nav {
+      position: relative;
+      z-index: 1;
+    }
+    .container {
+      background: rgba(20, 30, 40, 0.96);
+      border-radius: 18px;
+      box-shadow: 0 4px 32px #39ff1444, 0 0 40px #39ff1422 inset;
+      padding: 2.5rem 2rem 2rem 2rem;
+      border-left: 4px solid #39ff14;
+      border-bottom: 2px solid #00ff99;
+      max-width: 420px;
+      margin: 3rem auto;
+      text-align: center;
+    }
+    .option-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .option-btn {
+      background: #232b3a;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: 700;
+      padding: 1.1rem 1.5rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 12px #39ff1444;
+      letter-spacing: 1px;
+    }
+    .option-btn:hover, .option-btn:focus {
+      background: #39ff14;
+      color: #101820;
+      border-color: #00ff99;
+      box-shadow: 0 0 24px #39ff14aa;
+      outline: none;
+    }
+    .option-title {
+      color: #39ff14;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px #39ff14aa;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    header h1 {
+      color: #39ff14;
+      font-size: 2.2rem;
+      margin: 2rem 0 1rem 0;
+      letter-spacing: 2px;
+      text-shadow: 0 0 8px #39ff14aa;
+      font-family: 'Orbitron', Arial, sans-serif;
+      text-align: center;
+    }
+    main.content {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    main.content p {
+      color: #baffc9;
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+    }
+    footer {
+      text-align: center;
+      color: #baffc9;
+      margin-top: 3rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+    }
+    @media (max-width: 600px) {
+      .container { padding: 1.2rem 0.5rem; }
+      .option-title { font-size: 1.3rem; }
+      .option-btn { font-size: 1rem; padding: 0.8rem 0.7rem; }
+      header h1 { font-size: 1.3rem; }
+      .side-menu {
+        width: 80vw;
+        min-width: 180px;
+        padding-left: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+   <!-- Hamburger and sidebar must be direct siblings for CSS-only toggle to work -->
+   <input id="menu-btn" type="checkbox" class="menu-btn">
+   <label for="menu-btn" class="menu-icon"><span class="navicon"></span></label>
+   <nav class="side-menu">
+     <a href="index.html"><span>🏠</span> Home</a>
+     <a href="shared-memory.html"><span>💾</span> Shared Memory</a>
+     <a href="message-passing.html"><span>📨</span> Message Passing</a>
+     <a href="documentation.html"><span>📚</span> Documentation</a>
+     <a href="about.html"><span>📖</span> About</a>
+     <a href="github.html"><span>🐱</span> GitHub</a>
+   </nav>
+  
+  <!-- Dots background -->
+  <canvas id="bg-canvas"></canvas>
+  
+  <!-- Topic bar at the very top -->
+  <div class="topic-bar">Inter Process Communication</div>
+
+  <header>
+    <h1>Message Passing</h1>
+  </header>
+
+  <main class="content">
+    <p>Message passing is a key concept in operating systems that allows processes to communicate with each other.</p>
+    
+    <div class="container">
+      <h2 class="option-title">Three Core Concepts Of Message Passing</h2>
+      <div class="option-list">
+        <button class="option-btn" onclick="location.href='message-naming.html'">
+          1. Naming <br><span style="font-size:0.95em;font-weight:400;">(direct or indirect communication)</span>
+        </button>
+        <button class="option-btn" onclick="location.href='message-sync.html'">
+          2. Synchronization <br><span style="font-size:0.95em;font-weight:400;">(synchronous or asynchronous)</span>
+        </button>
+        <button class="option-btn" onclick="location.href='message-buffering.html'">
+          3. Buffering <br><span style="font-size:0.95em;font-weight:400;">(zero, bounded, unbounded)</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Inter Process Communication Project</p>
+  </footer>
+
+  <script>
+    // Sidebar menu functionality: close when clicking outside
+    document.addEventListener('click', function(e) {
+      const menuBtn = document.getElementById('menu-btn');
+      if (menuBtn.checked && 
+          !e.target.closest('.side-menu') && 
+          !e.target.closest('.menu-icon')) {
+        menuBtn.checked = false; // Fix: should be false to close
+      }
+    });
+  
+    // Close sidebar when clicking a sidebar link
+    document.querySelectorAll('nav.side-menu a').forEach(link => {
+      link.addEventListener('click', () => {
+        const menuBtn = document.getElementById('menu-btn');
+        menuBtn.checked = false; // Fix: set to false to close the menu
+      });
+    });
+
+  </script>
+  
+  
+  <script>
+    // Futuristic animated background with many white shaking dots
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let whiteDots = [];
+    const WHITE_DOTS = 500; // Dense field
+    const WHITE_COLOR = "#fff";
+    const WHITE_RADIUS = 2.5;
+    const WHITE_SHAKE = 2.2;
+    const WHITE_SPEED = 0.7;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    function initDots() {
+      whiteDots = [];
+      for (let i = 0; i < WHITE_DOTS; i++) {
+        let angle = Math.random() * 2 * Math.PI;
+        let r = Math.random() * (Math.min(canvas.width, canvas.height) / 1.5);
+        let cx = canvas.width / 2 + Math.cos(angle) * r;
+        let cy = canvas.height / 2 + Math.sin(angle) * r;
+        whiteDots.push({
+          x: cx,
+          y: cy,
+          dx: (Math.random() - 0.5) * WHITE_SPEED,
+          dy: (Math.random() - 0.5) * WHITE_SPEED,
+          shakePhase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+    function animateDots() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let dot of whiteDots) {
+        let shakeX = Math.sin(Date.now() / 350 + dot.shakePhase) * WHITE_SHAKE;
+        let shakeY = Math.cos(Date.now() / 350 + dot.shakePhase) * WHITE_SHAKE;
+        dot.x += dot.dx;
+        dot.y += dot.dy;
+        if (dot.x < 0 || dot.x > canvas.width) dot.dx *= -1;
+        if (dot.y < 0 || dot.y > canvas.height) dot.dy *= -1;
+        ctx.beginPath();
+        ctx.arc(dot.x + shakeX, dot.y + shakeY, WHITE_RADIUS, 0, 2 * Math.PI);
+        ctx.fillStyle = WHITE_COLOR;
+        ctx.shadowColor = WHITE_COLOR;
+        ctx.shadowBlur = 6;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      requestAnimationFrame(animateDots);
+    }
+    function setupBG() {
+      resizeCanvas();
+      initDots();
+      animateDots();
+    }
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      initDots();
+    });
+    setupBG();
+  </script>
+  <script src="script.js"></script>
+</body>
+</body>
+</html>

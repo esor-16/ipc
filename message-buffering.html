@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Inter Process Communication</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Rockids font: If you have the .ttf, use @font-face in CSS. Otherwise, fallback to a similar Google Font. -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Example fallback: -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <title>Buffering in Message Passing - Enhanced Simulation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Orbitron font for neon/futuristic look -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #101820;
+      color: #39ff14;
+      font-family: 'Orbitron', Arial, sans-serif;
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    #dots-bg {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .container {
+      max-width: 700px;
+      margin: 2.5rem auto;
+      background: rgba(16, 24, 32, 0.7);
+      border-radius: 18px;
+      /* Enhanced green neon glow */
+      box-shadow:
+        0 0 0 4px #39ff14cc,
+        0 0 32px 8px #39ff14cc,
+        0 0 80px 24px #39ff1444 inset,
+        0 0 120px 32px #39ff14aa;
+      padding: 2rem 2.5rem 2.5rem 2.5rem;
+      position: relative;
+      z-index: 1;
+      border: 2.5px solid #39ff14;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.2re;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin-bottom: 1.5rem;
+      /* Neon gradient text */
+      background: linear-gradient(90deg, #39ff14 10%, #00ff99 50%, #39ff14 90%);
+      
+      background-clip: text;
+      color: #39ff14;
+      /* Neon glow */
+      
+    }
+    .buffer-type-select {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .buffer-type-select button {
+      background: #181f2b;
+      color: #39ff14;
+      border: 2px solid #39ff14;
+      border-radius: 8px;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 1.08rem;
+      font-weight: bold;
+      padding: 0.7rem 1.7rem;
+      cursor: pointer;
+      box-shadow: 0 0 12px #39ff14cc;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .buffer-type-select button.active,
+    .buffer-type-select button:hover {
+      background: #39ff14;
+      color: #101820;
+      box-shadow: 0 0 24px #39ff14ee;
+    }
+    .buffer-type-select button[title]::after {
+      content: attr(title);
+      display: none;
+      position: absolute;
+      left: 50%; top: 110%;
+      transform: translateX(-50%);
+      background: #101820;
+      color: #fff;
+      padding: 0.4em 0.8em;
+      border-radius: 8px;
+      font-size: 0.9em;
+      white-space: nowrap;
+      box-shadow: 0 0 8px #39ff14cc;
+      z-index: 10;
+    }
+    .buffer-type-select button:hover[title]::after {
+      display: block;
+    }
+    .process-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 2.2rem;
+      gap: 2rem;
+      position: relative;
+    }
+    .process-box {
+      background: #181f2b;
+      border: 2px solid #39ff14;
+      border-radius: 14px;
+      box-shadow: 0 0 16px #39ff1444, 0 0 32px #39ff1444 inset;
+      padding: 1.2rem 1.5rem;
+      min-width: 140px;
+      text-align: center;
+      font-size: 1.1rem;
+      color: #fff;
+      position: relative;
+      z-index: 2;
+    }
+    .process-title {
+      color: #39ff14;
+      font-size: 1.1rem;
+      margin-bottom: 0.7rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #39ff14cc;
+    }
+    .process-btn {
+      background: #39ff14;
+      color: #101820;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 1.08rem;
+      font-weight: bold;
+      padding: 0.6rem 1.3rem;
+      margin-top: 0.7rem;
+      cursor: pointer;
+      box-shadow: 0 0 12px #39ff14cc;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .process-btn:disabled {
+      background: #181f2b;
+      color: #39ff14cc;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+    .process-btn[title]::after {
+      content: attr(title);
+      display: none;
+      position: absolute;
+      left: 50%; top: 110%;
+      transform: translateX(-50%);
+      background: #101820;
+      color: #fff;
+      padding: 0.4em 0.8em;
+      border-radius: 8px;
+      font-size: 0.9em;
+      white-space: nowrap;
+      box-shadow: 0 0 8px #39ff14cc;
+      z-index: 10;
+    }
+    .process-btn:hover[title]::after {
+      display: block;
+    }
+    .buffer-visual {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      z-index: 2;
+    }
+    .buffer-label {
+      color: #00ff99;
+      font-size: 1.08rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #00ff99cc;
+    }
+    .buffer-box {
+      display: flex;
+      gap: 0.7rem;
+      min-height: 60px;
+      margin-bottom: 0.5rem;
+      justify-content: center;
+    }
+    .msg {
+      background: #39ff14cc;
+      color: #101820;
+      border-radius: 8px;
+      box-shadow: 0 0 12px #39ff14cc;
+      padding: 0.6rem 1.1rem;
+      font-size: 1.05rem;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-weight: bold;
+      margin-top: 0.2rem;
+      margin-bottom: 0.2rem;
+      opacity: 1;
+      animation: popin 0.3s;
+      border: 2px solid #39ff14;
+      transition: opacity 0.3s;
+      position: relative;
+      z-index: 2;
+    }
+    @keyframes popin {
+      0% { transform: scale(0.7); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .buffer-slot {
+      width: 60px;
+      height: 40px;
+      border: 2px dashed #39ff14;
+      border-radius: 8px;
+      background: #101820;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 2px;
+      box-shadow: 0 0 8px #39ff1444 inset;
+      position: relative;
+      z-index: 1;
+    }
+    .status-bar {
+      min-height: 32px;
+      text-align: center;
+      color: #fff;
+      font-size: 1.08rem;
+      margin-top: 1.2rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #39ff14cc;
+      z-index: 2;
+      position: relative;
+    }
+    .status-wait {
+      color: #ff4c4c;
+      text-shadow: 0 0 8px #ff4c4c;
+    }
+    .status-ok {
+      color: #39ff14;
+      text-shadow: 0 0 8px #39ff14cc;
+    }
+    .status-recv {
+      color: #00ff99;
+      text-shadow: 0 0 8px #00ff99cc;
+    }
+    /* Modal for bounded buffer size */
+    #buffer-size-modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(16,24,32,0.85);
+      align-items: center;
+      justify-content: center;
+    }
+    #buffer-size-modal .modal-content {
+      background: #181f2b;
+      border: 2px solid #39ff14;
+      border-radius: 18px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 0 32px #39ff14cc;
+      color: #39ff14;
+      text-align: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    #buffer-size-modal label {
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    #buffer-size-modal input[type="number"] {
+      font-size: 1.1rem;
+      padding: 0.4rem 0.7rem;
+      border-radius: 8px;
+      border: 2px solid #39ff14;
+      background: #101820;
+      color: #39ff14;
+      margin-bottom: 1rem;
+      width: 80px;
+      text-align: center;
+      font-family: 'Orbitron', Arial, sans-serif;
+    }
+    #buffer-size-modal button {
+      background: #39ff14;
+      color: #101820;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Orbitron', Arial, sans-serif;
+      font-size: 1.08rem;
+      font-weight: bold;
+      padding: 0.6rem 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 0 12px #39ff14cc;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    #buffer-size-modal button:hover {
+      background: #00ff99;
+      color: #101820;
+    }
+    /* Message animation dots */
+    .particle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 8px #fff, 0 0 16px #fff8;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.95;
+      animation: shake-dot 2.7s infinite alternate;
+    }
+    @keyframes shake-dot {
+      0% { transform: translate(0, 0);}
+      100% { transform: translate(2px, -2px);}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="topic-bar">Inter Process Communication</div>
+<canvas id="dots-bg"></canvas>
+<div class="container">
+  <h1>Buffering in Message Passing</h1>
+  <div class="buffer-type-select">
+    <button id="zero-btn" class="active" title="No buffer; sender and receiver must synchronize.">Zero Buffering</button>
+    <button id="bounded-btn" title="Fixed-size buffer; sender waits if full, receiver waits if empty.">Bounded Buffering</button>
+    <button id="unbounded-btn" title="Infinite buffer; sender never blocks.">Unbounded Buffering</button>
+  </div>
+  <div class="process-row">
+    <div class="process-box" id="sender-box">
+      <div class="process-title">Sender</div>
+      <button class="process-btn" id="send-btn" title="Send a message to the buffer">Send Message</button>
+    </div>
+    <div class="process-box" id="receiver-box">
+      <div class="process-title">Receiver</div>
+      <button class="process-btn" id="recv-btn" title="Receive a message from the buffer">Receive Message</button>
+    </div>
+  </div>
+  <div class="buffer-visual">
+    <div class="buffer-label">Buffer / Queue</div>
+    <div class="buffer-box" id="buffer-box"></div>
+  </div>
+  <div class="status-bar" id="status-bar"></div>
+</div>
+<!-- Modal for bounded buffer size -->
+<div id="buffer-size-modal">
+  <div class="modal-content">
+    <label for="buffer-size-input">Enter buffer size (2-10):</label>
+    <input type="number" id="buffer-size-input" min="2" max="10" value="3">
+    <br>
+    <button id="buffer-size-confirm">Start</button>
+  </div>
+</div>
+<script>
+  // Neon dots background
+  const dotsCanvas = document.getElementById('dots-bg');
+  function drawDots() {
+    const ctx = dotsCanvas.getContext('2d');
+    const w = window.innerWidth, h = window.innerHeight;
+    dotsCanvas.width = w; dotsCanvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < 800; i++) {
+      const x = Math.random() * w, y = Math.random() * h;
+      ctx.beginPath();
+      ctx.arc(x, y, 1.2, 0, 2 * Math.PI);
+      ctx.fillStyle = "#fff";
+      ctx.shadowColor = "#fff";
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  }
+  drawDots();
+  window.addEventListener('resize', drawDots);
+
+  // Buffering simulation logic
+  let bufferType = 'zero'; // zero, bounded, unbounded
+  let buffer = [];
+  let bufferMax = 0;
+  const bufferBox = document.getElementById('buffer-box');
+  const statusBar = document.getElementById('status-bar');
+  const sendBtn = document.getElementById('send-btn');
+  const recvBtn = document.getElementById('recv-btn');
+  const zeroBtn = document.getElementById('zero-btn');
+  const boundedBtn = document.getElementById('bounded-btn');
+  const unboundedBtn = document.getElementById('unbounded-btn');
+  const bufferSizeModal = document.getElementById('buffer-size-modal');
+  const bufferSizeInput = document.getElementById('buffer-size-input');
+  const bufferSizeConfirm = document.getElementById('buffer-size-confirm');
+
+  function setBufferType(type) {
+    bufferType = type;
+    buffer = [];
+    if (type === 'zero') bufferMax = 0;
+    else if (type === 'bounded') {
+      bufferMax = 3; // default, will be set by modal
+      showBufferSizeModal();
+      return;
+    }
+    else bufferMax = Infinity;
+    updateUI();
+    statusBar.textContent = '';
+    [zeroBtn, boundedBtn, unboundedBtn].forEach(btn => btn.classList.remove('active'));
+    if (type === 'zero') zeroBtn.classList.add('active');
+    if (type === 'bounded') boundedBtn.classList.add('active');
+    if (type === 'unbounded') unboundedBtn.classList.add('active');
+  }
+
+  zeroBtn.onclick = () => setBufferType('zero');
+  boundedBtn.onclick = () => setBufferType('bounded');
+  unboundedBtn.onclick = () => setBufferType('unbounded');
+
+  function showBufferSizeModal() {
+    bufferSizeModal.style.display = 'flex';
+    bufferSizeInput.value = 3;
+    bufferSizeInput.focus();
+  }
+  bufferSizeConfirm.onclick = () => {
+    let val = parseInt(bufferSizeInput.value);
+    if (isNaN(val) || val < 2 || val > 10) {
+      bufferSizeInput.style.borderColor = "#ff4c4c";
+      bufferSizeInput.focus();
+      return;
+    }
+    bufferMax = val;
+    bufferSizeModal.style.display = 'none';
+    updateUI();
+    statusBar.textContent = '';
+    [zeroBtn, boundedBtn, unboundedBtn].forEach(btn => btn.classList.remove('active'));
+    boundedBtn.classList.add('active');
+  };
+
+  bufferSizeInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') bufferSizeConfirm.click();
+  });
+
+  function updateUI() {
+    // Draw buffer slots
+    bufferBox.innerHTML = '';
+    let slots = bufferType === 'bounded' ? bufferMax : Math.max(buffer.length, 5);
+    for (let i = 0; i < slots; i++) {
+      const slot = document.createElement('div');
+      slot.className = 'buffer-slot';
+      if (buffer[i]) {
+        const msg = document.createElement('div');
+        msg.className = 'msg';
+        msg.textContent = buffer[i];
+        slot.appendChild(msg);
+      }
+      bufferBox.appendChild(slot);
+    }
+    // Enable/disable buttons
+    if (bufferType === 'zero') {
+      sendBtn.disabled = false;
+      recvBtn.disabled = false;
+    } else if (bufferType === 'bounded') {
+      sendBtn.disabled = buffer.length >= bufferMax;
+      recvBtn.disabled = buffer.length === 0;
+    } else {
+      // unbounded
+      sendBtn.disabled = false;
+      recvBtn.disabled = buffer.length === 0;
+    }
+  }
+
+  // Animation helpers
+  function animateStatus(msg, type = 'ok') {
+    statusBar.textContent = msg;
+    statusBar.className = 'status-bar status-' + type;
+  }
+
+  // Animate message movement with white dots
+  function animateMessage(fromElem, toElem, callback) {
+    const rectFrom = fromElem.getBoundingClientRect();
+    const rectTo = toElem.getBoundingClientRect();
+    const containerRect = document.querySelector('.container').getBoundingClientRect();
+    const startX = rectFrom.left + rectFrom.width/2 - containerRect.left;
+    const startY = rectFrom.top + rectFrom.height/2 - containerRect.top;
+    const endX = rectTo.left + rectTo.width/2 - containerRect.left;
+    const endY = rectTo.top + rectTo.height/2 - containerRect.top;
+    for (let i = 0; i < 8; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'particle';
+      particle.style.left = startX + (Math.random()-0.5)*20 + 'px';
+      particle.style.top = startY + (Math.random()-0.5)*20 + 'px';
+      document.querySelector('.container').appendChild(particle);
+      setTimeout(() => {
+        particle.style.transition = 'all 0.7s cubic-bezier(.4,0,.2,1)';
+        particle.style.left = endX + (Math.random()-0.5)*20 + 'px';
+        particle.style.top = endY + (Math.random()-0.5)*20 + 'px';
+        particle.style.opacity = 0.2;
+      }, 10);
+      setTimeout(() => {
+        particle.remove();
+        if (i === 7 && callback) callback();
+      }, 750);
+    }
+  }
+
+  // Simulation logic
+  sendBtn.onclick = () => {
+    if (bufferType === 'zero') {
+      animateStatus('Sender sending message...', 'ok');
+      sendBtn.disabled = true;
+      animateMessage(sendBtn, recvBtn, () => {
+        animateStatus('Sender and Receiver synchronized. Message delivered instantly.', 'ok');
+        sendBtn.disabled = false;
+      });
+    } else if (bufferType === 'bounded') {
+      if (buffer.length >= bufferMax) {
+        animateStatus('Sender waiting... Buffer is full.', 'wait');
+        sendBtn.disabled = true;
+        setTimeout(() => {
+          animateStatus('Space available! Sender can send.', 'ok');
+          sendBtn.disabled = false;
+        }, 1200);
+      } else {
+        animateStatus('Sender sending message to buffer...', 'ok');
+        sendBtn.disabled = true;
+        const bufferSlot = bufferBox.children[buffer.length];
+        animateMessage(sendBtn, bufferSlot, () => {
+          buffer.push('MSG');
+          animateStatus('Message sent to buffer.', 'ok');
+          updateUI();
+          sendBtn.disabled = false;
+        });
+      }
+    } else {
+      // unbounded
+      animateStatus('Sender sending message to (infinite) buffer...', 'ok');
+      sendBtn.disabled = true;
+      const bufferSlot = bufferBox.children[buffer.length];
+      animateMessage(sendBtn, bufferSlot, () => {
+        buffer.push('MSG');
+        animateStatus('Message sent to (infinite) buffer.', 'ok');
+        updateUI();
+        sendBtn.disabled = false;
+      });
+    }
+  };
+
+  recvBtn.onclick = () => {
+    if (bufferType === 'zero') {
+      animateStatus('Receiver waiting for sender...', 'wait');
+      recvBtn.disabled = true;
+      animateMessage(recvBtn, sendBtn, () => {
+        animateStatus('Sender sent! Receiver got the message instantly.', 'recv');
+        recvBtn.disabled = false;
+      });
+    } else if (bufferType === 'bounded' || bufferType === 'unbounded') {
+      if (buffer.length === 0) {
+        animateStatus('Receiver waiting... Buffer is empty.', 'wait');
+        recvBtn.disabled = true;
+        setTimeout(() => {
+          animateStatus('Message arrived! Receiver can receive.', 'recv');
+          recvBtn.disabled = false;
+        }, 1200);
+      } else {
+        animateStatus('Receiver receiving message from buffer...', 'recv');
+        recvBtn.disabled = true;
+        const bufferSlot = bufferBox.children[0];
+        animateMessage(bufferSlot, recvBtn, () => {
+          buffer.shift();
+          animateStatus('Receiver got a message from buffer.', 'recv');
+          updateUI();
+          recvBtn.disabled = false;
+        });
+      }
+    }
+  };
+
+  // Initial UI
+  setBufferType('zero');
+</script>
+</body>
+</html>
